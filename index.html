@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="hi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI TRADER — Institutional Decision Terminal</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#05070E',
+            surfaceDark: '#0B1120',
+            surfaceElevated: '#151F32',
+            surfaceBorder: '#1E293B',
+            accentCyan: '#06B6D4',
+            accentEmerald: '#10B981',
+            accentRose: '#F43F5E',
+            accentAmber: '#F59E0B'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulseGreen { 0%, 100% { background-color: rgba(16, 185, 129, 0.1); } 50% { background-color: rgba(16, 185, 129, 0.35); } }
+    @keyframes pulseRed { 0%, 100% { background-color: rgba(244, 63, 94, 0.1); } 50% { background-color: rgba(244, 63, 94, 0.35); } }
+    .flash-up { animation: pulseGreen 0.4s ease-out; }
+    .flash-down { animation: pulseRed 0.4s ease-out; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-obsidian text-slate-100 min-h-screen font-sans antialiased pb-20 select-none">
+
+  <!-- TOP APP BAR -->
+  <header class="sticky top-0 z-50 bg-surfaceDark/90 backdrop-blur-md border-b border-surfaceBorder px-3 py-2.5 flex items-center justify-between shadow-xl">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <span class="text-base">🧠</span>
+      </div>
+      <div>
+        <div class="flex items-center space-x-1.5">
+          <h1 class="text-xs font-black tracking-wider text-white">AI TRADER PRO</h1>
+          <span class="bg-cyan-950/80 text-accentCyan text-[9px] px-1.5 py-0.5 rounded font-black border border-cyan-800/80">INSTITUTIONAL</span>
+        </div>
+        <p class="text-[9px] text-slate-400 font-medium">Real-Time Decision Terminal</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <span id="syncClock" class="text-[9px] font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-800">--:--:--</span>
+      <div id="wsBadge" class="flex items-center space-x-1 bg-emerald-950/70 border border-emerald-700/60 px-2 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-accentEmerald animate-ping"></span>
+        <span id="feedStatus" class="text-[9px] font-bold text-emerald-300 font-mono">LIVE FEED</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto p-3 space-y-3">
+
+    <!-- 1. AI MARKET COMMAND CENTER -->
+    <section class="bg-surfaceDark rounded-2xl border border-surfaceBorder p-4 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <div class="flex items-center justify-between mb-3 border-b border-surfaceBorder/60 pb-2.5">
+        <div>
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Market Regime</span>
+          <div id="regimeTitle" class="text-sm font-black text-emerald-400 flex items-center space-x-1 mt-0.5">
+            <span>🟢</span> <span>BULLISH EXPANSION</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">AI Market Score</span>
+          <div id="aiMarketScore" class="text-lg font-black font-mono text-accentCyan">84<span class="text-xs text-slate-400 font-normal">/100</span></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div class="bg-surfaceElevated p-2 rounded-xl border border-slate-800/80">
+          <span class="text-[9px] text-slate-400 uppercase font-bold block">Current Bias</span>
+          <span id="regimeBias" class="text-xs font-black text-emerald-400">LONG</span>
+        </div>
+        <div class="bg-surfaceElevated p-2 rounded-xl border border-slate-800/80">
+          <span class="text-[9px] text-slate-400 uppercase font-bold block">Confidence</span>
+          <span id="regimeConf" class="text-xs font-black text-cyan-400 font-mono">88%</span>
+        </div>
+        <div class="bg-surfaceElevated p-2 rounded-xl border border-slate-800/80">
+          <span class="text-[9px] text-slate-400 uppercase font-bold block">Spot Rec.</span>
+          <span class="text-xs font-bold text-emerald-300">BUY DIP</span>
+        </div>
+        <div class="bg-surfaceElevated p-2 rounded-xl border border-slate-800/80">
+          <span class="text-[9px] text-slate-400 uppercase font-bold block">Risk Level</span>
+          <span class="text-xs font-bold text-accentAmber">LOW/MOD</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CAPITAL ROTATION & MACRO RADAR -->
+    <section class="bg-surfaceDark rounded-2xl border border-surfaceBorder p-3.5 shadow-lg">
+      <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-cyan-400 text-sm">🌊</span>
+          <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wide">Capital Rotation Radar</h2>
+        </div>
+        <span id="rotationTag" class="text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-bold">
+          ALTCOIN EXPANSION PHASE
+        </span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center mb-2.5">
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 block font-bold">BTC DOMINANCE</span>
+          <p id="btcDominance" class="text-xs font-black text-slate-200 mt-0.5 font-mono">57.2% <span class="text-[9px] text-rose-400">↓</span></p>
+        </div>
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 block font-bold">USDT DOMINANCE</span>
+          <p id="usdtDominance" class="text-xs font-black text-slate-200 mt-0.5 font-mono">5.1% <span class="text-[9px] text-rose-400">↓ (Risk-On)</span></p>
+        </div>
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 block font-bold">FEAR & GREED</span>
+          <p id="fearGreedScore" class="text-xs font-black text-accentAmber mt-0.5 font-mono">74 <span class="text-[8px] text-slate-400">Greed</span></p>
+        </div>
+      </div>
+      
+      <p id="rotationDescription" class="text-[10px] text-slate-300 bg-slate-900/60 p-2 rounded-lg border border-slate-800/80 leading-relaxed">
+        💡 <strong>Capital Flow:</strong> USDT.D गिर रहा है और BTC.D स्थिर है। वेल्स ऑल्टकॉइन्स (SOL, ETH, BNB) में लिक्विडिटी रोटेट कर रही हैं।
+      </p>
+    </section>
+
+    <!-- 3. COIN SELECTOR TABS -->
+    <div class="grid grid-cols-4 gap-2">
+      <button onclick="selectAsset('BTCUSDT', 'Bitcoin', '₿')" id="tab-BTCUSDT" class="p-2.5 rounded-xl bg-surfaceElevated border border-accentCyan text-left transition-all shadow-md">
+        <div class="text-[10px] text-slate-400 font-bold">₿ BTC</div>
+        <div id="tab-p-btcusdt" class="text-xs font-black text-white mt-0.5 font-mono">$88,420</div>
+        <div id="tab-c-btcusdt" class="text-[9px] font-bold text-accentEmerald font-mono">+1.85%</div>
+      </button>
+      <button onclick="selectAsset('ETHUSDT', 'Ethereum', 'Ξ')" id="tab-ETHUSDT" class="p-2.5 rounded-xl bg-surfaceDark border border-slate-800 text-left transition-all">
+        <div class="text-[10px] text-slate-400 font-bold">Ξ ETH</div>
+        <div id="tab-p-ethusdt" class="text-xs font-black text-white mt-0.5 font-mono">$3,410</div>
+        <div id="tab-c-ethusdt" class="text-[9px] font-bold text-accentEmerald font-mono">+2.40%</div>
+      </button>
+      <button onclick="selectAsset('SOLUSDT', 'Solana', '◎')" id="tab-SOLUSDT" class="p-2.5 rounded-xl bg-surfaceDark border border-slate-800 text-left transition-all">
+        <div class="text-[10px] text-slate-400 font-bold">◎ SOL</div>
+        <div id="tab-p-solusdt" class="text-xs font-black text-white mt-0.5 font-mono">$194.50</div>
+        <div id="tab-c-solusdt" class="text-[9px] font-bold text-accentEmerald font-mono">+3.15%</div>
+      </button>
+      <button onclick="selectAsset('BNBUSDT', 'BNB', '❖')" id="tab-BNBUSDT" class="p-2.5 rounded-xl bg-surfaceDark border border-slate-800 text-left transition-all">
+        <div class="text-[10px] text-slate-400 font-bold">❖ BNB</div>
+        <div id="tab-p-bnbusdt" class="text-xs font-black text-white mt-0.5 font-mono">$645.20</div>
+        <div id="tab-c-bnbusdt" class="text-[9px] font-bold text-accentEmerald font-mono">+1.20%</div>
+      </button>
+    </div>
+
+    <!-- 4. ACTIVE ASSET REAL-TIME CARD -->
+    <section id="mainCard" class="bg-surfaceDark rounded-2xl border border-surfaceBorder p-4 shadow-xl transition-all">
+      <div class="flex items-center justify-between mb-3 border-b border-surfaceBorder/60 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <span id="activeAssetIcon" class="text-3xl text-amber-400">₿</span>
+          <div>
+            <h3 id="activeAssetTitle" class="text-sm font-black text-white">Bitcoin (BTCUSDT)</h3>
+            <p class="text-[10px] text-slate-400 font-medium">Real-Time Institutional Order Flow</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="activeAssetPrice" class="text-2xl font-black text-accentEmerald font-mono tracking-tight">$88,420.00</div>
+          <div id="activeAssetChange" class="text-xs font-bold text-accentEmerald font-mono">+1.85% (24h)</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 uppercase font-bold">24H High</span>
+          <p id="statHigh" class="text-xs font-bold text-slate-200 mt-0.5 font-mono">$89,650.00</p>
+        </div>
+        <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 uppercase font-bold">24H Low</span>
+          <p id="statLow" class="text-xs font-bold text-slate-200 mt-0.5 font-mono">$86,800.00</p>
+        </div>
+        <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+          <span class="text-[9px] text-slate-400 uppercase font-bold">24H Vol (USDT)</span>
+          <p id="statVol" class="text-xs font-bold text-slate-200 mt-0.5 font-mono">$4.82B</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. AI ACTION & DECISION ENGINE -->
+    <section class="bg-gradient-to-b from-surfaceElevated to-surfaceDark rounded-2xl border-2 border-cyan-500/50 p-4 shadow-2xl relative">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">🎯</span>
+          <h3 class="text-xs font-black text-white uppercase tracking-wider">AI ACTION & DECISION ENGINE</h3>
+        </div>
+        <span id="signalQualityBadge" class="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-700 font-bold px-2 py-0.5 rounded-md font-mono">
+          GRADE: A+ (CONFIRMED)
+        </span>
+      </div>
+
+      <div id="verdictBox" class="bg-emerald-950/40 border border-emerald-600/50 p-3 rounded-xl mb-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">Recommended Action</span>
+            <h4 id="verdictAction" class="text-lg font-black text-emerald-300">🟢 BUY THE PULLBACK (LONG)</h4>
+          </div>
+          <div class="text-right">
+            <span class="text-[9px] text-slate-400 font-bold uppercase block">AI Confidence</span>
+            <p id="verdictConfidence" class="text-base font-black text-accentCyan font-mono">88%</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2 text-center mb-3">
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[8px] text-slate-400 uppercase font-bold block">Entry Zone</span>
+          <p id="planEntry" class="text-xs font-black text-cyan-300 font-mono mt-0.5">$87,700-$88,100</p>
+        </div>
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[8px] text-slate-400 uppercase font-bold block">Target 1</span>
+          <p id="planT1" class="text-xs font-black text-emerald-400 font-mono mt-0.5">$91,500</p>
+        </div>
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[8px] text-slate-400 uppercase font-bold block">Hard Stop (SL)</span>
+          <p id="planSL" class="text-xs font-black text-rose-400 font-mono mt-0.5">$85,600</p>
+        </div>
+        <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+          <span class="text-[8px] text-slate-400 uppercase font-bold block">R : R Ratio</span>
+          <p id="planRR" class="text-xs font-black text-amber-300 font-mono mt-0.5">1 : 2.8</p>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-[11px]">
+        <div class="flex justify-between items-center text-slate-300">
+          <span>Whale Orderflow & CVD</span>
+          <span id="chkCVD" class="font-bold text-emerald-400">🟢 Aggressive Buying (+82%)</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>Top Traders Long/Short</span>
+          <span id="chkRatio" class="font-bold text-emerald-400">🟢 64% Longs (Healthy)</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>Futures Funding Rate</span>
+          <span id="chkFunding" class="font-bold text-cyan-400">🟢 +0.0100% (Neutral)</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-300">
+          <span>Trap Detector Engine</span>
+          <span id="chkTrap" class="font-bold text-emerald-400">🟢 No Bear/Bull Trap</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. COINGLASS LIQUIDITY HUNT & MAGNET RADAR -->
+    <section class="bg-surfaceDark rounded-2xl border border-surfaceBorder p-4 shadow-xl">
+      <div class="flex items-center justify-between mb-3 border-b border-surfaceBorder/60 pb-2">
+        <div class="flex items-center space-x-2">
+          <span class="text-amber-400">🎯</span>
+          <h3 class="text-xs font-black text-slate-200 uppercase">CoinGlass Liquidity Targets & Hunt Zones</h3>
+        </div>
+        <span class="text-[9px] bg-amber-950/80 border border-amber-800 text-amber-300 font-bold px-2 py-0.5 rounded">
+          HEATMAP CLUSTERS
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="bg-rose-950/30 p-2.5 rounded-xl border border-rose-800/40">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold text-rose-300 uppercase">Short Liquidity Magnet</span>
+            <span id="upperMagnetScore" class="text-xs font-mono font-black text-rose-400">84/100</span>
+          </div>
+          <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1.5 overflow-hidden">
+            <div id="upperMagnetBar" class="bg-rose-500 h-full" style="width: 84%;"></div>
+          </div>
+          <p class="text-[9px] text-slate-400 mt-1">शॉर्टर्स का लिक्विडेशन पूल ऊपर भारी है</p>
+        </div>
+
+        <div class="bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-800/40">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-bold text-emerald-300 uppercase">Long Liquidity Magnet</span>
+            <span id="lowerMagnetScore" class="text-xs font-mono font-black text-emerald-400">38/100</span>
+          </div>
+          <div class="w-full bg-slate-900 h-1.5 rounded-full mt-1.5 overflow-hidden">
+            <div id="lowerMagnetBar" class="bg-emerald-500 h-full" style="width: 38%;"></div>
+          </div>
+          <p class="text-[9px] text-slate-400 mt-1">नीचे स्टॉप लॉस का रिस्क कम है</p>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex justify-between items-center p-2.5 rounded-xl bg-rose-950/20 border border-rose-800/30">
+          <div>
+            <span class="text-[10px] font-bold text-rose-400 block">SHORT SQUEEZE TARGET (Upper Pool)</span>
+            <span class="text-[9px] text-slate-400">High leverage short liquidation cluster</span>
+          </div>
+          <div class="text-right">
+            <p id="targetShortSqueeze" class="text-sm font-black text-rose-300 font-mono">$90,450.00</p>
+            <span id="targetShortGap" class="text-[9px] text-rose-400 font-mono font-bold">+2.3% Gap</span>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-800/30">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-400 block">LONG FLUSH SUPPORT (Lower Pool)</span>
+            <span class="text-[9px] text-slate-400">Stop-loss hunt / Buyer accumulation zone</span>
+          </div>
+          <div class="text-right">
+            <p id="targetLongFlush" class="text-sm font-black text-emerald-300 font-mono">$86,120.00</p>
+            <span id="targetLongGap" class="text-[9px] text-emerald-400 font-mono font-bold">-2.6% Gap</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. REAL-TIME WHALE ALERT & LIVE TICKS -->
+    <section class="bg-surfaceDark rounded-2xl border border-surfaceBorder p-4 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-accentCyan">🚨</span>
+          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wide">Real-Time Whale Flow (>$50K)</h3>
+        </div>
+        <span id="whaleTotalCount" class="text-[9px] font-mono text-cyan-300 bg-cyan-950 border border-cyan-800 px-2 py-0.5 rounded-md font-bold">
+          0 Alerts
+        </span>
+      </div>
+      <div id="whaleFeedList" class="space-y-1.5 font-mono text-[11px] max-h-52 overflow-y-auto pr-1">
+        <div class="text-center text-slate-500 py-3">Connecting to trade stream...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let activeSymbol = 'BTCUSDT';
+    let activeName = 'Bitcoin';
+    let activeIcon = '₿';
+    let whaleCounter = 0;
+    
+    const state = {
+      'BTCUSDT': { price: 88420.00, chg: 1.85, high: 89650.00, low: 86800.00, vol: '4.82B' },
+      'ETHUSDT': { price: 3410.50, chg: 2.40, high: 3480.00, low: 3340.00, vol: '2.15B' },
+      'SOLUSDT': { price: 194.50, chg: 3.15, high: 198.80, low: 188.20, vol: '1.45B' },
+      'BNBUSDT': { price: 645.20, chg: 1.20, high: 652.00, low: 638.00, vol: '820M' }
+    };
+
+    function fmt(val) {
+      return parseFloat(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function computeAIDecision(price) {
+      const p = parseFloat(price);
+      if (!p) return;
+
+      const upper = p * 1.023;
+      const lower = p * 0.974;
+      document.getElementById('targetShortSqueeze').innerText = '$' + fmt(upper);
+      document.getElementById('targetLongFlush').innerText = '$' + fmt(lower);
+
+      const entryLow = p * 0.992;
+      const entryHigh = p * 0.998;
+      const t1 = p * 1.035;
+      const sl = p * 0.968;
+
+      document.getElementById('planEntry').innerText = `$${fmt(entryLow).split('.')[0]}-${fmt(entryHigh).split('.')
