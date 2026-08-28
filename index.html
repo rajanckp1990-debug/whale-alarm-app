@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="hi" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#05070d">
+<title>AI TRADER X — Institutional Decision Terminal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={
+ darkMode:"class",
+ theme:{
+  extend:{
+   colors:{
+    obsidian:"#05070d",
+    panel:"#0b1020",
+    panel2:"#10182a",
+    line:"#1d2940",
+    cyan:"#22d3ee",
+    green:"#10b981",
+    red:"#f43f5e",
+    amber:"#f59e0b",
+    purple:"#8b5cf6"
+   }
+  }
+ }
+}
+</script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ background:
+ radial-gradient(circle at 10% 0%,rgba(34,211,238,.08),transparent 25%),
+ radial-gradient(circle at 90% 10%,rgba(139,92,246,.08),transparent 25%),
+ #05070d;
+}
+.glass{
+ background:linear-gradient(145deg,rgba(15,23,42,.94),rgba(7,12,24,.96));
+ backdrop-filter:blur(18px);
+}
+.card{
+ border:1px solid rgba(51,65,85,.55);
+ box-shadow:0 12px 40px rgba(0,0,0,.28);
+}
+.neon{
+ box-shadow:0 0 30px rgba(34,211,238,.12);
+}
+.greenGlow{box-shadow:0 0 28px rgba(16,185,129,.15)}
+.redGlow{box-shadow:0 0 28px rgba(244,63,94,.15)}
+.pulse{animation:pulse 1.4s infinite}
+@keyframes pulse{
+ 0%,100%{opacity:1}50%{opacity:.45}
+}
+.flashG{animation:fg .5s}
+.flashR{animation:fr .5s}
+@keyframes fg{50%{background:rgba(16,185,129,.25)}}
+@keyframes fr{50%{background:rgba(244,63,94,.25)}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#26344d;border-radius:20px}
+.num{font-variant-numeric:tabular-nums}
+.progress{
+ height:6px;background:#172033;border-radius:20px;overflow:hidden
+}
+.progress>div{height:100%;border-radius:20px;transition:.5s}
+.small{font-size:10px}
+</style>
+</head>
+
+<body class="text-slate-100 min-h-screen pb-24">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 glass border-b border-slate-800/70">
+<div class="max-w-6xl mx-auto px-3 py-2.5 flex items-center justify-between">
+
+ <div class="flex items-center gap-2">
+  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center text-lg shadow-lg">
+   🧠
+  </div>
+  <div>
+   <div class="flex items-center gap-1.5">
+    <b class="text-xs tracking-widest">AI TRADER X</b>
+    <span class="text-[8px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+     LIVE
+    </span>
+   </div>
+   <div class="text-[9px] text-slate-500">
+    Institutional Decision Engine
+   </div>
+  </div>
+ </div>
+
+ <div class="flex items-center gap-2">
+  <div id="clock" class="text-[9px] font-mono text-slate-400">--:--:--</div>
+  <div id="connection"
+       class="px-2 py-1 rounded-full border border-red-800 bg-red-950/40 text-[8px] text-red-300">
+   ● CONNECTING
+  </div>
+ </div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto p-3 space-y-3">
+
+<!-- MARKET COMMAND -->
+<section class="glass card rounded-2xl p-4 neon">
+
+ <div class="flex justify-between items-start">
+  <div>
+   <div class="small uppercase tracking-widest text-slate-500 font-bold">
+    Global Market Regime
+   </div>
+   <div id="regime" class="text-xl font-black text-emerald-400 mt-1">
+    CALCULATING...
+   </div>
+   <div id="regimeText" class="text-[10px] text-slate-400 mt-1">
+    Live market intelligence collecting...
+   </div>
+  </div>
+
+  <div class="text-right">
+   <div class="small text-slate-500 uppercase">AI Market Score</div>
+   <div id="marketScore" class="text-3xl font-black text-cyan-400 num">
+    --
+   </div>
+   <div class="text-[8px] text-slate-500">/ 100</div>
+  </div>
+ </div>
+
+ <div class="grid grid-cols-4 gap-2 mt-4">
+  <Metric id="marketBias" label="BIAS" value="--"/>
+  <Metric id="marketConf" label="CONFIDENCE" value="--"/>
+  <Metric id="spotBias" label="SPOT" value="--"/>
+  <Metric id="futureBias" label="FUTURES" value="--"/>
+ </div>
+</section>
+
+<!-- CAPITAL FLOW -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between items-center mb-3">
+  <div class="font-black text-xs tracking-wider">🌊 CAPITAL FLOW RADAR</div>
+  <span id="rotation" class="text-[8px] px-2 py-1 rounded-full bg-slate-900 border border-slate-700">
+   ANALYZING
+  </span>
+ </div>
+
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+
+  <Flow id="totalMcap" title="TOTAL MARKET CAP"/>
+  <Flow id="btcDom" title="BTC DOMINANCE"/>
+  <Flow id="usdtDom" title="USDT DOMINANCE"/>
+  <Flow id="total2" title="TOTAL 2 ALT CAP"/>
+  <Flow id="total3" title="TOTAL 3 ALT CAP"/>
+
+ </div>
+
+ <div id="capitalText"
+      class="mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px] text-slate-300">
+  ⏳ Capital-flow engine waiting for data...
+ </div>
+</section>
+
+<!-- ASSET SELECTOR -->
+<section class="grid grid-cols-5 gap-2">
+
+<button class="coin active" data-symbol="BTCUSDT">₿<span>BTC</span></button>
+<button class="coin" data-symbol="ETHUSDT">Ξ<span>ETH</span></button>
+<button class="coin" data-symbol="SOLUSDT">◎<span>SOL</span></button>
+<button class="coin" data-symbol="BNBUSDT">◆<span>BNB</span></button>
+<button class="coin" data-symbol="DOGEUSDT">Ð<span>DOGE</span></button>
+
+</section>
+
+<!-- ASSET -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between items-center">
+  <div>
+   <div id="assetName" class="font-black text-sm">BITCOIN</div>
+   <div id="assetSymbol" class="text-[9px] text-slate-500">BTCUSDT</div>
+  </div>
+
+  <div class="text-right">
+   <div id="price" class="text-2xl font-black num">$--</div>
+   <div id="change" class="text-xs font-bold num">--</div>
+  </div>
+ </div>
+
+ <div class="grid grid-cols-4 gap-2 mt-4">
+  <Metric id="high" label="24H HIGH" value="--"/>
+  <Metric id="low" label="24H LOW" value="--"/>
+  <Metric id="volume" label="24H VOLUME" value="--"/>
+  <Metric id="trades" label="LIVE TRADES" value="--"/>
+ </div>
+</section>
+
+<!-- DECISION -->
+<section id="decisionCard"
+ class="glass card rounded-2xl p-4 border-cyan-700/50">
+
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">
+   🎯 AI DECISION ENGINE
+  </div>
+
+  <span id="grade"
+   class="text-[8px] px-2 py-1 rounded bg-slate-900 border border-slate-700">
+   SCANNING
+  </span>
+ </div>
+
+ <div id="verdict"
+      class="mt-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800">
+
+  <div class="text-[9px] text-slate-500 uppercase">
+   Recommended Action
+  </div>
+
+  <div id="action" class="text-2xl font-black mt-1">
+   WAIT
+  </div>
+
+  <div id="reason"
+       class="text-[10px] text-slate-400 mt-2 leading-relaxed">
+   Waiting for sufficient live market evidence.
+  </div>
+ </div>
+
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
+
+  <Plan id="entry" label="ENTRY ZONE"/>
+  <Plan id="t1" label="TARGET 1"/>
+  <Plan id="t2" label="TARGET 2"/>
+  <Plan id="sl" label="HARD STOP"/>
+  <Plan id="rr" label="R : R"/>
+
+ </div>
+</section>
+
+<!-- SCORE MATRIX -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="font-black text-xs tracking-widest mb-3">
+  🧠 SIGNAL MATRIX
+ </div>
+
+ <div class="space-y-3">
+
+  <Score id="priceScore" label="Price Momentum"/>
+  <Score id="flowScore" label="Buy/Sell Flow"/>
+  <Score id="cvdScore" label="CVD Pressure"/>
+  <Score id="fundScore" label="Funding"/>
+  <Score id="oiScore" label="Open Interest"/>
+  <Score id="liqScore" label="Liquidation Pressure"/>
+  <Score id="volumeScore" label="Volume"/>
+  <Score id="trendScore" label="Trend Structure"/>
+
+ </div>
+</section>
+
+<!-- FUTURES INTELLIGENCE -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between items-center mb-3">
+  <div class="font-black text-xs tracking-widest">
+   ⚡ FUTURES INTELLIGENCE
+  </div>
+  <span id="futuresStatus" class="text-[8px] text-slate-500">
+   LIVE
+  </span>
+ </div>
+
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+
+  <Metric id="funding" label="FUNDING RATE" value="--"/>
+  <Metric id="openInterest" label="OPEN INTEREST" value="--"/>
+  <Metric id="longShort" label="L/S RATIO" value="--"/>
+  <Metric id="liq24" label="LIQUIDATIONS" value="--"/>
+
+ </div>
+
+ <div class="grid grid-cols-2 gap-2 mt-3">
+  <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50">
+   <div class="text-[9px] text-emerald-400">LONG RISK</div>
+   <div id="longRisk" class="text-lg font-black">--</div>
+  </div>
+
+  <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-900/50">
+   <div class="text-[9px] text-rose-400">SHORT RISK</div>
+   <div id="shortRisk" class="text-lg font-black">--</div>
+  </div>
+ </div>
+</section>
+
+<!-- LIQUIDITY RADAR -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">
+   🎯 LIQUIDITY HUNT RADAR
+  </div>
+  <span class="text-[8px] text-amber-400">MODELLED ZONES</span>
+ </div>
+
+ <div class="grid grid-cols-2 gap-2 mt-3">
+
+  <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-900/50">
+   <div class="text-[9px] text-rose-400 font-bold">
+    UPPER LIQUIDITY / SHORT SQUEEZE
+   </div>
+   <div id="upperLiq" class="text-lg font-black text-rose-300 num">
+    --
+   </div>
+   <div id="upperGap" class="text-[9px] text-slate-500">
+    --
+   </div>
+  </div>
+
+  <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50">
+   <div class="text-[9px] text-emerald-400 font-bold">
+    LOWER LIQUIDITY / LONG FLUSH
+   </div>
+   <div id="lowerLiq" class="text-lg font-black text-emerald-300 num">
+    --
+   </div>
+   <div id="lowerGap" class="text-[9px] text-slate-500">
+    --
+   </div>
+  </div>
+
+ </div>
+
+ <div class="mt-3">
+  <div class="flex justify-between text-[9px]">
+   <span class="text-rose-400">SHORT LIQUIDITY MAGNET</span>
+   <span id="upperPower">--</span>
+  </div>
+  <div class="progress mt-1">
+   <div id="upperBar" style="width:0%;background:#f43f5e"></div>
+  </div>
+
+  <div class="flex justify-between text-[9px] mt-3">
+   <span class="text-emerald-400">LONG LIQUIDITY MAGNET</span>
+   <span id="lowerPower">--</span>
+  </div>
+  <div class="progress mt-1">
+   <div id="lowerBar" style="width:0%;background:#10b981"></div>
+  </div>
+ </div>
+</section>
+
+<!-- WHALE FLOW -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">
+   🐋 LARGE TRADE / WHALE FLOW
+  </div>
+
+  <span id="whaleCount"
+   class="text-[8px] px-2 py-1 rounded bg-cyan-950 text-cyan-300">
+   0
+  </span>
+ </div>
+
+ <div class="grid grid-cols-3 gap-2 mt-3">
+  <Metric id="buyFlow" label="BUY FLOW" value="$0"/>
+  <Metric id="sellFlow" label="SELL FLOW" value="$0"/>
+  <Metric id="cvd" label="CVD" value="$0"/>
+ </div>
+
+ <div id="whaleFeed"
+      class="mt-3 max-h-64 overflow-y-auto space-y-1.5">
+  <div class="text-center text-slate-600 text-[10px] py-5">
+   Waiting for large live trades...
+  </div>
+ </div>
+
+ <div class="text-[8px] text-slate-600 mt-2">
+  *Large Trade = public trade-size proxy. It does not identify the actual trader.
+ </div>
+</section>
+
+<!-- PUMP / DUMP RADAR -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="font-black text-xs tracking-widest mb-3">
+  🚀 PUMP / 💥 DUMP PROBABILITY RADAR
+ </div>
+
+ <div class="grid grid-cols-2 gap-3">
+
+  <div>
+   <div class="flex justify-between text-[9px]">
+    <span class="text-emerald-400">PUMP POTENTIAL</span>
+    <b id="pumpProb">--</b>
+   </div>
+   <div class="progress mt-1">
+    <div id="pumpBar" style="width:0%;background:#10b981"></div>
+   </div>
+  </div>
+
+  <div>
+   <div class="flex justify-between text-[9px]">
+    <span class="text-rose-400">DUMP RISK</span>
+    <b id="dumpProb">--</b>
+   </div>
+   <div class="progress mt-1">
+    <div id="dumpBar" style="width:0%;background:#f43f5e"></div>
+   </div>
+  </div>
+
+ </div>
+
+ <div id="pumpReason"
+      class="mt-3 p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-400">
+  --
+ </div>
+</section>
+
+<!-- TRAP -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="font-black text-xs tracking-widest">
+  🪤 TRAP DETECTOR
+ </div>
+
+ <div class="grid grid-cols-3 gap-2 mt-3">
+
+  <Metric id="bullTrap" label="BULL TRAP" value="--"/>
+  <Metric id="bearTrap" label="BEAR TRAP" value="--"/>
+  <Metric id="trapStatus" label="STATUS" value="--"/>
+
+ </div>
+</section>
+
+<!-- COIN RANKING -->
+<section class="glass card rounded-2xl p-4">
+
+ <div class="flex justify-between">
+  <div class="font-black text-xs tracking-widest">
+   🏆 MARKET OPPORTUNITY SCANNER
+  </div>
+  <button onclick="scanAll()"
+    class="text-[8px] px-2 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+    SCAN
+  </button>
+ </div>
+
+ <div id="ranking" class="mt-3 space-y-1.5">
+  Loading...
+ </div>
+</section>
+
+<!-- SYSTEM -->
+<section class="text-center text-[8px] text-slate-600 py-3">
+ AI TRADER X • Market intelligence only • Not financial advice
+ <br>
+ Public exchange market data • No trading API keys required
+</section>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-slate-800">
+<div class="max-w-6xl mx-auto grid grid-cols-4 text-center">
+
+ <button onclick="scrollTopPage()" class="py-3">
+  <div>🏠</div><span class="text-[8px]">DASHBOARD</span>
+ </button>
+
+ <button onclick="document.getElementById('decisionCard').scrollIntoView({behavior:'smooth'})"
+  class="py-3">
+  <div>🎯</div><span class="text-[8px]">DECISION</span>
+ </button>
+
+ <button onclick="document.getElementById('whaleFeed').scrollIntoView({behavior:'smooth'})"
+  class="py-3">
+  <div>🐋</div><span class="text-[8px]">WHALES</span>
+ </button>
+
+ <button onclick="document.getElementById('ranking').scrollIntoView({behavior:'smooth'})"
+  class="py-3">
+  <div>🏆</div><span class="text-[8px]">SCANNER</span>
+ </button>
+
+</div>
+</nav>
+
+<script>
+
+/* =========================================================
+   AI TRADER X
+   LIVE PUBLIC MARKET ENGINE
+========================================================= */
+
+const CONFIG={
+ symbols:{
+  BTCUSDT:{name:"BITCOIN",icon:"₿"},
+  ETHUSDT:{name:"ETHEREUM",icon:"Ξ"},
+  SOLUSDT:{name:"SOLANA",icon:"◎"},
+  BNBUSDT:{name:"BNB",icon:"◆"},
+  DOGEUSDT:{name:"DOGECOIN",icon:"Ð"}
+ },
+ largeTradeUSD:50000,
+ whaleTradeUSD:100000,
+ maxFeed:35
+};
+
+let active="BTCUSDT";
+
+const S={};
+
+Object.keys(CONFIG.symbols).forEach(s=>{
+ S[s]={
+  price:0,
+  change:0,
+  high:0,
+  low:0,
+  volume:0,
+  trades:0,
+  buy:0,
+  sell:0,
+  cvd:0,
+  oi:0,
+  funding:0,
+  ls:1,
+  liquidations:0,
+  large:0,
+  lastUpdate:0
+ };
+});
+
+/* ---------- HELPERS ---------- */
+
+const $=id=>document.getElementById(id);
+
+function money(v){
+ if(!isFinite(v))return "--";
+ if(v>=1e12)return "$"+(v/1e12).toFixed(2)+"T";
+ if(v>=1e9)return "$"+(v/1e9).toFixed(2)+"B";
+ if(v>=1e6)return "$"+(v/1e6).toFixed(2)+"M";
+ if(v>=1e3)return "$"+(v/1e3).toFixed(1)+"K";
+ return "$"+v.toFixed(2);
+}
+
+function price(v){
+ if(!isFinite(v)||!v)return "--";
+ if(v<1)return "$"+v.toFixed(5);
+ if(v<10)return "$"+v.toFixed(3);
+ return "$"+v.toLocaleString("en-US",{maximumFractionDigits:2});
+}
+
+function pct(v){
+ if(!isFinite(v))return "--";
+ return (v>=0?"+":"")+v.toFixed(2)+"%";
+}
+
+function clamp(v,a=0,b=100){
+ return Math.max(a,Math.min(b,v));
+}
+
+function sleep(ms){
+ return new Promise(r=>setTimeout(r,ms));
+}
+
+/* ---------- UI COMPONENTS ---------- */
+
+function Metric(id,label,value){
+ return `
+ <div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+  <div class="text-[8px] text-slate-500 font-bold">${label}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">${value}</div>
+ </div>`;
+}
+
+function Flow(id,title){
+ return `
+ <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+  <div class="text-[8px] text-slate-500 font-bold">${title}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">--</div>
+ </div>`;
+}
+
+function Plan(id,label){
+ return `
+ <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+  <div class="text-[8px] text-slate-500">${label}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">--</div>
+ </div>`;
+}
+
+function Score(id,label){
+ return `
+ <div>
+  <div class="flex justify-between text-[9px]">
+   <span class="text-slate-400">${label}</span>
+   <b id="${id}Value">--</b>
+  </div>
+  <div class="progress mt-1">
+   <div id="${id}Bar" style="width:0%;background:#22d3ee"></div>
+  </div>
+ </div>`;
+}
+
+/* ---------- TIME ---------- */
+
+setInterval(()=>{
+ $("clock").innerText=new Date().toLocaleTimeString("en-IN");
+},1000);
+
+/* ---------- CONNECTION ---------- */
+
+function connection(ok=true){
+ $("connection").innerHTML=ok
+ ?'<span class="text-emerald-300">● LIVE FEED</span>'
+ :'<span class="text-red-300">● RECONNECTING</span>';
+
+ $("connection").className=ok
+ ?"px-2 py-1 rounded-full border border-emerald-800 bg-emerald-950/40 text-[8px]"
+ :"px-2 py-1 rounded-full border border-red-800 bg-red-950/40 text-[8px]";
+}
+
+/* ---------- SPOT WEBSOCKET ---------- */
+
+let spotWS=null;
+
+function connectSpot(){
+
+ if(spotWS){
+  try{spotWS.close()}catch(e){}
+ }
+
+ const streams=Object.keys(CONFIG.symbols)
+ .map(s=>s.toLowerCase()+"@trade")
+ .join("/");
+
+ const url="wss://stream.binance.com:9443/stream?streams="+streams;
+
+ spotWS=new WebSocket(url);
+
+ spotWS.onopen=()=>{
+  connection(true);
+ };
+
+ spotWS.onmessage=e=>{
+  try{
+   const msg=JSON.parse(e.data);
+   const d=msg.data;
+   if(!d||!d.s)return;
+
+   const s=d.s;
+   if(!S[s])return;
+
+   const p=+d.p;
+   const q=+d.q;
+   const usd=p*q;
+
+   S[s].price=p;
+   S[s].trades++;
+   S[s].lastUpdate=Date.now();
+
+   /* Binance trade:
+      m=true means buyer is maker.
+      Therefore aggressive seller.
+   */
+   if(d.m){
+    S[s].sell+=usd;
+    S[s].cvd-=usd;
+   }else{
+    S[s].buy+=usd;
+    S[s].cvd+=usd;
+   }
+
+   if(usd>=CONFIG.largeTradeUSD){
+    S[s].large++;
+    addLargeTrade(s,p,q,usd,!d.m);
+   }
+
+   if(s===active)render();
+
+  }catch(err){}
+ };
+
+ spotWS.onerror=()=>connection(false);
+
+ spotWS.onclose=()=>{
+  connection(false);
+  setTimeout(connectSpot,2500);
+ };
+}
+
+/* ---------- TICKER ---------- */
+
+let tickerWS=null;
+
+function connectTicker(){
+
+ const streams=Object.keys(CONFIG.symbols)
+ .map(s=>s.toLowerCase()+"@ticker")
+ .join("/");
+
+ tickerWS=new WebSocket(
+  "wss://stream.binance.com:9443/stream?streams="+streams
+ );
+
+ tickerWS.onmessage=e=>{
+  try{
+   const d=JSON.parse(e.data).data;
+   if(!d||!S[d.s])return;
+
+   S[d.s].price=+d.c;
+   S[d.s].change=+d.P;
+   S[d.s].high=+d.h;
+   S[d.s].low=+d.l;
+   S[d.s].volume=+d.q;
+
+   updateCoinTabs();
+
+   if(d.s===active)render();
+
+  }catch(err){}
+ };
+
+ tickerWS.onclose=()=>setTimeout(connectTicker,3000);
+}
+
+/* ---------- LARGE TRADE FEED ---------- */
+
+function addLargeTrade(symbol,p,q,usd,buy){
+
+ const feed=$("whaleFeed");
+
+ if(feed.children.length===1 &&
+    feed.children[0].innerText.includes("Waiting")){
+  feed.innerHTML="";
+ }
+
+ const row=document.createElement("div");
+
+ row.className=
+ "p-2 rounded-lg border "+
+ (buy
+ ?"bg-emerald-950/30 border-emerald-900/50"
+ :"bg-rose-950/30 border-rose-900/50");
+
+ row.innerHTML=`
+ <div class="flex justify-between">
+  <span class="${buy?"text-emerald-400":"text-rose-400"} font-bold">
+   ${buy?"🟢 BUY":"🔴 SELL"}
+  </span>
+  <span class="text-slate-500">
+   ${new Date().toLocaleTimeString("en-IN")}
+  </span>
+ </div>
+ <div class="flex justify-between mt-1">
+  <span class="text-slate-300">${symbol}</span>
+  <span class="font-black">${money(usd)}</span>
+ </div>
+ <div class="text-[8px] text-slate-500">
+  ${q.toFixed(4)} units @ ${price(p)}
+ </div>
+ `;
+
+ feed.prepend(row);
+
+ while(feed.children.length>CONFIG.maxFeed)
+  feed.removeChild(feed.lastChild);
+
+ $("whaleCount").innerText=
+  S[active].large+" LARGE TRADES";
+}
+
+/* ---------- FUTURES ---------- */
+
+let futuresWS=null;
+
+function connectFutures(){
+
+ const streams=Object.keys(CONFIG.symbols)
+ .map(s=>s.toLowerCase()+"@markPrice")
+ .join("/");
+
+ futuresWS=new WebSocket(
+  "wss://fstream.binance.com/stream?streams="+streams
+ );
+
+ futuresWS.onmessage=e=>{
+  try{
+   const d=JSON.parse(e.data).data;
+   if(!d||!d.s||!S[d.s])return;
+
+   S[d.s].funding=+d.r;
+
+   if(d.s===active)render();
+
+  }catch(err){}
+ };
+
+ futuresWS.onclose=()=>{
+  setTimeout(connectFut
