@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="hi" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#05070d">
+<title>AI TRADER X — Institutional Decision Terminal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={
+ darkMode:"class",
+ theme:{
+  extend:{
+   colors:{
+    obsidian:"#05070d",
+    panel:"#0b1020",
+    panel2:"#10182a",
+    line:"#1d2940",
+    cyan:"#22d3ee",
+    green:"#10b981",
+    red:"#f43f5e",
+    amber:"#f59e0b",
+    purple:"#8b5cf6"
+   }
+  }
+ }
+}
+</script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ background:
+ radial-gradient(circle at 10% 0%,rgba(34,211,238,.08),transparent 25%),
+ radial-gradient(circle at 90% 10%,rgba(139,92,246,.08),transparent 25%),
+ #05070d;
+}
+.glass{
+ background:linear-gradient(145deg,rgba(15,23,42,.94),rgba(7,12,24,.96));
+ backdrop-filter:blur(18px);
+}
+.card{
+ border:1px solid rgba(51,65,85,.55);
+ box-shadow:0 12px 40px rgba(0,0,0,.28);
+}
+.neon{box-shadow:0 0 30px rgba(34,211,238,.12)}
+.greenGlow{box-shadow:0 0 28px rgba(16,185,129,.15)}
+.redGlow{box-shadow:0 0 28px rgba(244,63,94,.15)}
+.pulse{animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.flashG{animation:fg .5s}
+.flashR{animation:fr .5s}
+@keyframes fg{50%{background:rgba(16,185,129,.25)}}
+@keyframes fr{50%{background:rgba(244,63,94,.25)}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#26344d;border-radius:20px}
+.num{font-variant-numeric:tabular-nums}
+.progress{height:6px;background:#172033;border-radius:20px;overflow:hidden}
+.progress>div{height:100%;border-radius:20px;transition:.5s}
+.small{font-size:10px}
+.coin{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ padding:10px 4px;border-radius:14px;border:1px solid rgba(51,65,85,.55);
+ background:linear-gradient(145deg,rgba(15,23,42,.9),rgba(7,12,24,.95));
+ font-size:16px;color:#94a3b8;cursor:pointer;transition:.2s;
+}
+.coin span{font-size:9px;margin-top:2px;font-weight:700;letter-spacing:.05em}
+.coin.active{
+ border-color:#22d3ee;color:#22d3ee;
+ box-shadow:0 0 20px rgba(34,211,238,.18);
+ background:linear-gradient(145deg,rgba(8,40,48,.9),rgba(7,12,24,.95));
+}
+.rankRow{
+ display:flex;justify-content:space-between;align-items:center;
+ padding:8px 10px;border-radius:10px;background:rgba(2,6,16,.6);
+ border:1px solid rgba(51,65,85,.4);font-size:11px;
+}
+</style>
+</head>
+
+<body class="text-slate-100 min-h-screen pb-24">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 glass border-b border-slate-800/70">
+<div class="max-w-6xl mx-auto px-3 py-2.5 flex items-center justify-between">
+ <div class="flex items-center gap-2">
+  <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-emerald-500 flex items-center justify-center text-lg shadow-lg">🧠</div>
+  <div>
+   <div class="flex items-center gap-1.5">
+    <b class="text-xs tracking-widest">AI TRADER X</b>
+    <span class="text-[8px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">LIVE</span>
+   </div>
+   <div class="text-[9px] text-slate-500">Institutional Decision Engine</div>
+  </div>
+ </div>
+ <div class="flex items-center gap-2">
+  <div id="clock" class="text-[9px] font-mono text-slate-400">--:--:--</div>
+  <div id="connection" class="px-2 py-1 rounded-full border border-red-800 bg-red-950/40 text-[8px] text-red-300">● CONNECTING</div>
+ </div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto p-3 space-y-3">
+
+<!-- MARKET COMMAND -->
+<section class="glass card rounded-2xl p-4 neon">
+ <div class="flex justify-between items-start">
+  <div>
+   <div class="small uppercase tracking-widest text-slate-500 font-bold">Global Market Regime</div>
+   <div id="regime" class="text-xl font-black text-emerald-400 mt-1">CALCULATING...</div>
+   <div id="regimeText" class="text-[10px] text-slate-400 mt-1">Live market intelligence collecting...</div>
+  </div>
+  <div class="text-right">
+   <div class="small text-slate-500 uppercase">AI Market Score</div>
+   <div id="marketScore" class="text-3xl font-black text-cyan-400 num">--</div>
+   <div class="text-[8px] text-slate-500">/ 100</div>
+  </div>
+ </div>
+ <div class="grid grid-cols-4 gap-2 mt-4" id="marketMetrics"></div>
+</section>
+
+<!-- CAPITAL FLOW -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between items-center mb-3">
+  <div class="font-black text-xs tracking-wider">🌊 CAPITAL FLOW RADAR</div>
+  <span id="rotation" class="text-[8px] px-2 py-1 rounded-full bg-slate-900 border border-slate-700">ANALYZING</span>
+ </div>
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-2" id="flowMetrics"></div>
+ <div id="capitalText" class="mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px] text-slate-300">
+  ⏳ Capital-flow engine waiting for data...
+ </div>
+</section>
+
+<!-- ASSET SELECTOR -->
+<section class="grid grid-cols-5 gap-2" id="coinSelector"></section>
+
+<!-- ASSET -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between items-center">
+  <div>
+   <div id="assetName" class="font-black text-sm">BITCOIN</div>
+   <div id="assetSymbol" class="text-[9px] text-slate-500">BTCUSDT</div>
+  </div>
+  <div class="text-right">
+   <div id="price" class="text-2xl font-black num">$--</div>
+   <div id="change" class="text-xs font-bold num">--</div>
+  </div>
+ </div>
+ <div class="grid grid-cols-4 gap-2 mt-4" id="assetMetrics"></div>
+</section>
+
+<!-- DECISION -->
+<section id="decisionCard" class="glass card rounded-2xl p-4 border-cyan-700/50">
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">🎯 AI DECISION ENGINE</div>
+  <span id="grade" class="text-[8px] px-2 py-1 rounded bg-slate-900 border border-slate-700">SCANNING</span>
+ </div>
+ <div id="verdict" class="mt-3 p-4 rounded-2xl bg-slate-950/70 border border-slate-800">
+  <div class="text-[9px] text-slate-500 uppercase">Recommended Action</div>
+  <div id="action" class="text-2xl font-black mt-1">WAIT</div>
+  <div id="reason" class="text-[10px] text-slate-400 mt-2 leading-relaxed">Waiting for sufficient live market evidence.</div>
+ </div>
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3" id="planMetrics"></div>
+</section>
+
+<!-- SCORE MATRIX -->
+<section class="glass card rounded-2xl p-4">
+ <div class="font-black text-xs tracking-widest mb-3">🧠 SIGNAL MATRIX</div>
+ <div class="space-y-3" id="scoreMatrix"></div>
+</section>
+
+<!-- FUTURES INTELLIGENCE -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between items-center mb-3">
+  <div class="font-black text-xs tracking-widest">⚡ FUTURES INTELLIGENCE</div>
+  <span id="futuresStatus" class="text-[8px] text-slate-500">LIVE</span>
+ </div>
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-2" id="futuresMetrics"></div>
+ <div class="grid grid-cols-2 gap-2 mt-3">
+  <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50">
+   <div class="text-[9px] text-emerald-400">LONG RISK</div>
+   <div id="longRisk" class="text-lg font-black">--</div>
+  </div>
+  <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-900/50">
+   <div class="text-[9px] text-rose-400">SHORT RISK</div>
+   <div id="shortRisk" class="text-lg font-black">--</div>
+  </div>
+ </div>
+</section>
+
+<!-- LIQUIDITY RADAR -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">🎯 LIQUIDITY HUNT RADAR</div>
+  <span class="text-[8px] text-amber-400">MODELLED ZONES</span>
+ </div>
+ <div class="grid grid-cols-2 gap-2 mt-3">
+  <div class="p-3 rounded-xl bg-rose-950/20 border border-rose-900/50">
+   <div class="text-[9px] text-rose-400 font-bold">UPPER LIQUIDITY / SHORT SQUEEZE</div>
+   <div id="upperLiq" class="text-lg font-black text-rose-300 num">--</div>
+   <div id="upperGap" class="text-[9px] text-slate-500">--</div>
+  </div>
+  <div class="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/50">
+   <div class="text-[9px] text-emerald-400 font-bold">LOWER LIQUIDITY / LONG FLUSH</div>
+   <div id="lowerLiq" class="text-lg font-black text-emerald-300 num">--</div>
+   <div id="lowerGap" class="text-[9px] text-slate-500">--</div>
+  </div>
+ </div>
+ <div class="mt-3">
+  <div class="flex justify-between text-[9px]">
+   <span class="text-rose-400">SHORT LIQUIDITY MAGNET</span>
+   <span id="upperPower">--</span>
+  </div>
+  <div class="progress mt-1"><div id="upperBar" style="width:0%;background:#f43f5e"></div></div>
+  <div class="flex justify-between text-[9px] mt-3">
+   <span class="text-emerald-400">LONG LIQUIDITY MAGNET</span>
+   <span id="lowerPower">--</span>
+  </div>
+  <div class="progress mt-1"><div id="lowerBar" style="width:0%;background:#10b981"></div></div>
+ </div>
+</section>
+
+<!-- WHALE FLOW -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between items-center">
+  <div class="font-black text-xs tracking-widest">🐋 LARGE TRADE / WHALE FLOW</div>
+  <span id="whaleCount" class="text-[8px] px-2 py-1 rounded bg-cyan-950 text-cyan-300">0</span>
+ </div>
+ <div class="grid grid-cols-3 gap-2 mt-3" id="whaleMetrics"></div>
+ <div id="whaleFeed" class="mt-3 max-h-64 overflow-y-auto space-y-1.5">
+  <div class="text-center text-slate-600 text-[10px] py-5">Waiting for large live trades...</div>
+ </div>
+ <div class="text-[8px] text-slate-600 mt-2">*Large Trade = public trade-size proxy. It does not identify the actual trader.</div>
+</section>
+
+<!-- PUMP / DUMP RADAR -->
+<section class="glass card rounded-2xl p-4">
+ <div class="font-black text-xs tracking-widest mb-3">🚀 PUMP / 💥 DUMP PROBABILITY RADAR</div>
+ <div class="grid grid-cols-2 gap-3">
+  <div>
+   <div class="flex justify-between text-[9px]"><span class="text-emerald-400">PUMP POTENTIAL</span><b id="pumpProb">--</b></div>
+   <div class="progress mt-1"><div id="pumpBar" style="width:0%;background:#10b981"></div></div>
+  </div>
+  <div>
+   <div class="flex justify-between text-[9px]"><span class="text-rose-400">DUMP RISK</span><b id="dumpProb">--</b></div>
+   <div class="progress mt-1"><div id="dumpBar" style="width:0%;background:#f43f5e"></div></div>
+  </div>
+ </div>
+ <div id="pumpReason" class="mt-3 p-3 rounded-xl bg-slate-950 border border-slate-800 text-[10px] text-slate-400">--</div>
+</section>
+
+<!-- TRAP -->
+<section class="glass card rounded-2xl p-4">
+ <div class="font-black text-xs tracking-widest">🪤 TRAP DETECTOR</div>
+ <div class="grid grid-cols-3 gap-2 mt-3" id="trapMetrics"></div>
+</section>
+
+<!-- COIN RANKING -->
+<section class="glass card rounded-2xl p-4">
+ <div class="flex justify-between">
+  <div class="font-black text-xs tracking-widest">🏆 MARKET OPPORTUNITY SCANNER</div>
+  <button onclick="scanAll()" class="text-[8px] px-2 py-1 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">SCAN</button>
+ </div>
+ <div id="ranking" class="mt-3 space-y-1.5">Loading...</div>
+</section>
+
+<section class="text-center text-[8px] text-slate-600 py-3">
+ AI TRADER X • Market intelligence only • Not financial advice<br>
+ Public exchange market data • No trading API keys required
+</section>
+
+</main>
+
+<nav class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-slate-800">
+<div class="max-w-6xl mx-auto grid grid-cols-4 text-center">
+ <button onclick="scrollTopPage()" class="py-3"><div>🏠</div><span class="text-[8px]">DASHBOARD</span></button>
+ <button onclick="document.getElementById('decisionCard').scrollIntoView({behavior:'smooth'})" class="py-3"><div>🎯</div><span class="text-[8px]">DECISION</span></button>
+ <button onclick="document.getElementById('whaleFeed').scrollIntoView({behavior:'smooth'})" class="py-3"><div>🐋</div><span class="text-[8px]">WHALES</span></button>
+ <button onclick="document.getElementById('ranking').scrollIntoView({behavior:'smooth'})" class="py-3"><div>🏆</div><span class="text-[8px]">SCANNER</span></button>
+</div>
+</nav>
+
+<script>
+/* =========================================================
+   AI TRADER X — LIVE PUBLIC MARKET ENGINE
+   Fixed version: real HTML (no fake JSX tags), completed JS,
+   REST polling for OI / long-short ratio / ranking added.
+========================================================= */
+
+const CONFIG={
+ symbols:{
+  BTCUSDT:{name:"BITCOIN",icon:"₿"},
+  ETHUSDT:{name:"ETHEREUM",icon:"Ξ"},
+  SOLUSDT:{name:"SOLANA",icon:"◎"},
+  BNBUSDT:{name:"BNB",icon:"◆"},
+  DOGEUSDT:{name:"DOGECOIN",icon:"Ð"}
+ },
+ largeTradeUSD:50000,
+ whaleTradeUSD:100000,
+ maxFeed:35,
+ restPollMs:15000
+};
+
+let active="BTCUSDT";
+const S={};
+Object.keys(CONFIG.symbols).forEach(s=>{
+ S[s]={
+  price:0,change:0,high:0,low:0,volume:0,trades:0,
+  buy:0,sell:0,cvd:0,
+  oi:0,oiPrev:0,funding:0,ls:1,
+  liquidations:0,liqBuy:0,liqSell:0,
+  large:0,lastUpdate:0
+ };
+});
+
+const $=id=>document.getElementById(id);
+
+function money(v){
+ if(!isFinite(v))return "--";
+ if(Math.abs(v)>=1e12)return "$"+(v/1e12).toFixed(2)+"T";
+ if(Math.abs(v)>=1e9)return "$"+(v/1e9).toFixed(2)+"B";
+ if(Math.abs(v)>=1e6)return "$"+(v/1e6).toFixed(2)+"M";
+ if(Math.abs(v)>=1e3)return "$"+(v/1e3).toFixed(1)+"K";
+ return "$"+v.toFixed(2);
+}
+function price(v){
+ if(!isFinite(v)||!v)return "--";
+ if(v<1)return "$"+v.toFixed(5);
+ if(v<10)return "$"+v.toFixed(3);
+ return "$"+v.toLocaleString("en-US",{maximumFractionDigits:2});
+}
+function pct(v){ if(!isFinite(v))return "--"; return (v>=0?"+":"")+v.toFixed(2)+"%"; }
+function clamp(v,a=0,b=100){ return Math.max(a,Math.min(b,v)); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* ---------- UI BUILDERS (real HTML, injected once) ---------- */
+
+function metricHTML(id,label,value="--"){
+ return `<div class="p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+  <div class="text-[8px] text-slate-500 font-bold">${label}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">${value}</div>
+ </div>`;
+}
+function flowHTML(id,title){
+ return `<div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800">
+  <div class="text-[8px] text-slate-500 font-bold">${title}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">--</div>
+ </div>`;
+}
+function planHTML(id,label){
+ return `<div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+  <div class="text-[8px] text-slate-500">${label}</div>
+  <div id="${id}" class="text-xs font-black mt-1 num">--</div>
+ </div>`;
+}
+function scoreHTML(id,label){
+ return `<div>
+  <div class="flex justify-between text-[9px]">
+   <span class="text-slate-400">${label}</span><b id="${id}Value">--</b>
+  </div>
+  <div class="progress mt-1"><div id="${id}Bar" style="width:0%;background:#22d3ee"></div></div>
+ </div>`;
+}
+
+function buildStaticUI(){
+ $("marketMetrics").innerHTML =
+  metricHTML("marketBias","BIAS")+metricHTML("marketConf","CONFIDENCE")+
+  metricHTML("spotBias","SPOT")+metricHTML("futureBias","FUTURES");
+
+ $("flowMetrics").innerHTML =
+  flowHTML("totalMcap","TOTAL MARKET CAP")+flowHTML("btcDom","BTC DOMINANCE")+
+  flowHTML("usdtDom","USDT DOMINANCE")+flowHTML("total2","TOTAL 2 ALT CAP")+
+  flowHTML("total3","TOTAL 3 ALT CAP");
+
+ $("assetMetrics").innerHTML =
+  metricHTML("high","24H HIGH")+metricHTML("low","24H LOW")+
+  metricHTML("volume","24H VOLUME")+metricHTML("trades","LIVE TRADES","0");
+
+ $("planMetrics").innerHTML =
+  planHTML("entry","ENTRY ZONE")+planHTML("t1","TARGET 1")+planHTML("t2","TARGET 2")+
+  planHTML("sl","HARD STOP")+planHTML("rr","R : R");
+
+ $("scoreMatrix").innerHTML =
+  scoreHTML("priceScore","Price Momentum")+scoreHTML("flowScore","Buy/Sell Flow")+
+  scoreHTML("cvdScore","CVD Pressure")+scoreHTML("fundScore","Funding")+
+  scoreHTML("oiScore","Open Interest")+scoreHTML("liqScore","Liquidation Pressure")+
+  scoreHTML("volumeScore","Volume")+scoreHTML("trendScore","Trend Structure");
+
+ $("futuresMetrics").innerHTML =
+  metricHTML("funding","FUNDING RATE")+metricHTML("openInterest","OPEN INTEREST")+
+  metricHTML("longShort","L/S RATIO")+metricHTML("liq24","LIQUIDATIONS");
+
+ $("whaleMetrics").innerHTML =
+  metricHTML("buyFlow","BUY FLOW","$0")+metricHTML("sellFlow","SELL FLOW","$0")+metricHTML("cvd","CVD","$0");
+
+ $("trapMetrics").innerHTML =
+  metricHTML("bullTrap","BULL TRAP")+metricHTML("bearTrap","BEAR TRAP")+metricHTML("trapStatus","STATUS");
+
+ $("coinSelector").innerHTML = Object.entries(CONFIG.symbols).map(([sym,info])=>
+  `<button class="coin${sym===active?' active':''}" data-symbol="${sym}">${info.icon}<span>${sym.replace('USDT','')}</span></button>`
+ ).join("");
+
+ document.querySelectorAll(".coin").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+   active=btn.dataset.symbol;
+   document.querySelectorAll(".coin").forEach(b=>b.classList.remove("active"));
+   btn.classList.add("active");
+   $("assetName").innerText=CONFIG.symbols[active].name;
+   $("assetSymbol").innerText=active;
+   S[active].large=0;
+   $("whaleFeed").innerHTML='<div class="text-center text-slate-600 text-[10px] py-5">Waiting for large live trades...</div>';
+   render();
+  });
+ });
+}
+
+function scrollTopPage(){ window.scrollTo({top:0,behavior:"smooth"}); }
+
+/* ---------- TIME ---------- */
+setInterval(()=>{ $("clock").innerText=new Date().toLocaleTimeString("en-IN"); },1000);
+
+/* ---------- CONNECTION INDICATOR ---------- */
+let liveFlags={spot:false,ticker:false,futures:false};
+function connection(){
+ const ok = liveFlags.spot && liveFlags.ticker;
+ $("connection").innerHTML = ok ? '<span class="text-emerald-300">● LIVE FEED</span>' : '<span class="text-red-300">● RECONNECTING</span>';
+ $("connection").className = ok
+  ? "px-2 py-1 rounded-full border border-emerald-800 bg-emerald-950/40 text-[8px]"
+  : "px-2 py-1 rounded-full border border-red-800 bg-red-950/40 text-[8px]";
+}
+
+/* ---------- SPOT TRADE WEBSOCKET (buy/sell flow + large trades) ---------- */
+let spotWS=null;
+function connectSpot(){
+ if(spotWS){ try{spotWS.onclose=null; spotWS.close();}catch(e){} }
+ const streams=Object.keys(CONFIG.symbols).map(s=>s.toLowerCase()+"@trade").join("/");
+ spotWS=new WebSocket("wss://stream.binance.com:9443/stream?streams="+streams);
+
+ spotWS.onopen=()=>{ liveFlags.spot=true; connection(); };
+ spotWS.onmessage=e=>{
+  try{
+   const d=JSON.parse(e.data).data;
+   if(!d||!d.s||!S[d.s])return;
+   const s=d.s, p=+d.p, q=+d.q, usd=p*q;
+   S[s].price=p; S[s].trades++; S[s].lastUpdate=Date.now();
+   if(d.m){ S[s].sell+=usd; S[s].cvd-=usd; } else { S[s].buy+=usd; S[s].cvd+=usd; }
+   if(usd>=CONFIG.largeTradeUSD){ S[s].large++; if(s===active) addLargeTrade(s,p,q,usd,!d.m); }
+   if(s===active) render();
+  }catch(err){}
+ };
+ spotWS.onerror=()=>{ liveFlags.spot=false; connection(); };
+ spotWS.onclose=()=>{ liveFlags.spot=false; connection(); setTimeout(connectSpot,2500); };
+}
+
+/* ---------- 24H TICKER WEBSOCKET ---------- */
+let tickerWS=null;
+function connectTicker(){
+ const streams=Object.keys(CONFIG.symbols).map(s=>s.toLowerCase()+"@ticker").join("/");
+ tickerWS=new WebSocket("wss://stream.binance.com:9443/stream?streams="+streams);
+ tickerWS.onopen=()=>{ liveFlags.ticker=true; connection(); };
+ tickerWS.onmessage=e=>{
+  try{
+   const d=JSON.parse(e.data).data;
+   if(!d||!S[d.s])return;
+   S[d.s].price=+d.c; S[d.s].change=+d.P; S[d.s].high=+d.h; S[d.s].low=+d.l; S[d.s].volume=+d.q;
+   updateCoinTabs();
+   if(d.s===active) render();
+  }catch(err){}
+ };
+ tickerWS.onerror=()=>{ liveFlags.ticker=false; connection(); };
+ tickerWS.onclose=()=>{ liveFlags.ticker=false; connection(); setTimeout(connectTicker,3000); };
+}
+
+/* ---------- FUTURES: mark price (funding) + liquidation stream ---------- */
+let futuresWS=null, liqWS=null;
+function connectFutures(){
+ if(futuresWS){ try{futuresWS.onclose=null; futuresWS.close();}catch(e){} }
+ const streams=Object.keys(CONFIG.symbols).map(s=>s.toLowerCase()+"@markPrice").join("/");
+ futuresWS=new WebSocket("wss://fstream.binance.com/stream?streams="+streams);
+ futuresWS.onopen=()=>{ liveFlags.futures=true; };
+ futuresWS.onmessage=e=>{
+  try{
+   const d=JSON.parse(e.data).data;
+   if(!d||!d.s||!S[d.s])return;
+   S[d.s].funding=+d.r;
+   if(d.s===active) render();
+  }cat
